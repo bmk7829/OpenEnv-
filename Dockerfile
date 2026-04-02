@@ -12,5 +12,4 @@ COPY . .
 EXPOSE 7860
 
 # The standard command to run an openenv api server
-# openenv create sets up the internal FastAPI wrapper on the file defined in openenv.yaml
-CMD ["openenv", "serve", "--port", "7860", "--host", "0.0.0.0"]
+CMD ["uvicorn", "server.app:app", "--host", "0.0.0.0", "--port", "7860"]
