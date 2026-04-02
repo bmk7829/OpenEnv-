@@ -1,3 +1,11 @@
+---
+title: Openenv Ticket Triage
+emoji: 🎟️
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+pinned: false
+---
 # Ticket Triage - OpenEnv Environment
 
 ## Description & Motivation
