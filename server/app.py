@@ -11,6 +11,10 @@ app = create_app(
     max_concurrent_envs=1,
 )
 
+@app.get("/")
+def read_root():
+    return {"status": "ok"}
+
 def main(host: str = "0.0.0.0", port: int = 7860):
     import uvicorn
     uvicorn.run(app, host=host, port=port)
