@@ -1,0 +1,17 @@
+version: "1.0"
+name: "ticket_triage"
+description: "An environment for customer support ticket triage. The agent must categorize, assign priority, and route the ticket correctly."
+maintainers:
+  - "user@example.com"
+entrypoint: "env:Environment"
+
+tasks:
+  - id: "easy"
+    description: "Triage a simple password reset request"
+    grader: "env:grader"
+  - id: "medium"
+    description: "Triage an angry customer regarding a billing dispute"
+    grader: "env:grader"
+  - id: "hard"
+    description: "Triage a critical security vulnerability report"
+    grader: "env:grader"
