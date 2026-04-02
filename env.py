@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import Optional, Dict, Any, Tuple
+from openenv.core.env_server.interfaces import Environment as BaseEnvironment
 
 class TicketTriageAction(BaseModel):
     category: Optional[str] = Field(None, description="Set the category of the ticket. Options: 'Technical', 'Billing', 'Security', 'Sales'")
@@ -15,6 +16,9 @@ class TicketTriageObservation(BaseModel):
     current_priority: Optional[str] = None
     current_team: Optional[str] = None
     feedback: str = ""
+    reward: float = 0.0
+    done: bool = False
+    error: Optional[str] = None
 
 class TicketTriageReward(BaseModel):
     value: float
@@ -35,8 +39,9 @@ class TicketTriageState(BaseModel):
     steps_taken: int = 0
     done: bool = False
     
-class Environment:
-    def __init__(self, task_name: str = "easy"):
+class Environment(BaseEnvironment):
+    def __init__(self, task_name: str = "easy", **kwargs):
+        super().__init__()
         self.task_name = task_name
         self._init_task()
         
@@ -74,11 +79,11 @@ class Environment:
         else:
             raise ValueError(f"Unknown task: {self.task_name}")
 
-    def reset(self) -> TicketTriageObservation:
+    def reset(self, **kwargs) -> TicketTriageObservation:
         self._init_task()
-        return self._get_obs(feedback="Ticket opened. Please route this ticket correctly.")
+        return self._get_obs(feedback="Ticket opened. Please route this ticket correctly.", reward=0.0, done=False)
 
-    def _get_obs(self, feedback: str = "") -> TicketTriageObservation:
+    def _get_obs(self, feedback: str = "", reward: float = 0.0, done: bool = False) -> TicketTriageObservation:
         return TicketTriageObservation(
             ticket_id=self._state.ticket_id,
             subject=self._state.subject,
@@ -86,7 +91,9 @@ class Environment:
             current_category=self._state.current_category,
             current_priority=self._state.current_priority,
             current_team=self._state.current_team,
-            feedback=feedback
+            feedback=feedback,
+            reward=reward,
+            done=done
         )
         
     def _calculate_potential(self, state: TicketTriageState) -> float:
@@ -99,11 +106,11 @@ class Environment:
             score += 0.4
         return score
 
-    def step(self, action: TicketTriageAction) -> Tuple[TicketTriageObservation, TicketTriageReward, bool, Dict[str, Any]]:
+    def step(self, action: TicketTriageAction, **kwargs) -> TicketTriageObservation:
         self._state.steps_taken += 1
         
         if self._state.done:
-            return self._get_obs("Episode already done."), TicketTriageReward(value=0.0), True, {}
+            return self._get_obs("Episode already done.", reward=0.0, done=True)
             
         old_potential = self._calculate_potential(self._state)
         
@@ -131,12 +138,14 @@ class Environment:
         reward_value = new_potential - old_potential - 0.01
         
         feedback_str = ". ".join(feedback_msgs)
-        obs = self._get_obs(feedback=feedback_str)
-        
-        return obs, TicketTriageReward(value=float(reward_value)), self._state.done, {}
+        return self._get_obs(feedback=feedback_str, reward=float(reward_value), done=self._state.done)
 
+    @property
     def state(self) -> TicketTriageState:
         return self._state
+
+    def close(self) -> None:
+        pass
 
 def grader(state: TicketTriageState) -> float:
     score = 0.0

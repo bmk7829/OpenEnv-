@@ -115,7 +115,9 @@ def run_task(client: OpenAI, task_name: str) -> None:
             action_obj = get_model_action(client, step, env.state(), last_feedback)
             action_str = action_obj.model_dump_json(exclude_none=True).replace(" ", "")
             
-            new_obs, reward_val, done, _ = env.step(action_obj)
+            new_obs = env.step(action_obj)
+            reward_val = new_obs.reward
+            done = new_obs.done
             
             # if reward is an object, get its value; else use float
             reward = float(reward_val.value) if hasattr(reward_val, "value") else float(reward_val)
