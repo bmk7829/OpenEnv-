@@ -3,6 +3,7 @@ name: "ticket_triage"
 description: "An environment for customer support ticket triage. The agent must categorize, assign priority, and route the ticket correctly."
 maintainers:
   - "user@example.com"
+tags: ["openenv"]
 entrypoint: "env:Environment"
 
 tasks:

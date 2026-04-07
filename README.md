@@ -5,8 +5,9 @@ colorFrom: blue
 colorTo: indigo
 sdk: docker
 pinned: false
+tags: ["openenv"]
 ---
-# Ticket Triage - OpenEnv Environment
+# Ticket Triage - OpenEnv Benchmark Environment
 
 ## Description & Motivation
 This environment simulates a real-world customer support scenario. An AI agent is acting as a Level 1 dispatcher. Its goal is to analyze an incoming customer support ticket (including the subject and message body) and perform triage by accurately assigning its `category`, `priority`, and routing it to the proper `team`. 
