@@ -4,10 +4,9 @@ from typing import List, Optional, Any
 from openai import OpenAI
 from env import Environment, TicketTriageAction
 
-API_BASE_URL = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
-MODEL_NAME = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-72B-Instruct")
-API_KEY = os.getenv("API_KEY", os.getenv("HF_TOKEN", "dummy"))
-
+API_BASE_URL = os.environ.get("API_BASE_URL")
+API_KEY = os.environ.get("API_KEY")
+MODEL_NAME = os.environ.get("MODEL_NAME", "Qwen/Qwen2.5-72B-Instruct")
 # Optional - if you use from_docker_image():
 LOCAL_IMAGE_NAME = os.getenv("LOCAL_IMAGE_NAME")
 BENCHMARK = "ticket_triage"
@@ -141,15 +140,8 @@ def run_task(client: OpenAI, task_name: str) -> None:
         log_end(success=success, steps=steps_taken, score=final_score, rewards=rewards)
 
 def main():
-    # Provide local defaults if missing, so the AST checker can find the literal string below
-    if "API_BASE_URL" not in os.environ:
-        os.environ["API_BASE_URL"] = "https://router.huggingface.co/v1"
-    if "API_KEY" not in os.environ:
-        os.environ["API_KEY"] = os.environ.get("HF_TOKEN", "dummy")
-        
-    # The platform validator appears to use strict AST/regex replacement
     client = OpenAI(
-        base_url=os.environ["API_BASE_URL"], 
+        base_url=os.environ["API_BASE_URL"],
         api_key=os.environ["API_KEY"]
     )
     
