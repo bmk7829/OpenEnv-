@@ -1,6 +1,17 @@
 import os
 import sys
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# Safely prioritize local package paths to prevent import errors with pre-installed packages
+current_dir = os.path.dirname(os.path.abspath(__file__))
+root_dir = os.path.dirname(current_dir)
+
+if root_dir not in sys.path:
+    sys.path.insert(0, root_dir)
+
+# Also add extracted core if it exists
+extract_path = os.path.join(root_dir, "openenv_core_extract")
+if os.path.exists(extract_path) and extract_path not in sys.path:
+    sys.path.insert(0, extract_path)
 
 import argparse
 from openenv.core.env_server.http_server import create_app

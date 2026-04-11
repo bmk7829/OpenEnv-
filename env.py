@@ -79,7 +79,18 @@ class Environment(BaseEnvironment):
         else:
             raise ValueError(f"Unknown task: {self.task_name}")
 
-    def reset(self, **kwargs) -> TicketTriageObservation:
+    def reset(self, seed: Optional[int] = None, episode_id: Optional[str] = None, **kwargs) -> TicketTriageObservation:
+        # The platform validator often passes task_id to switch between tasks
+        # It may be in kwargs directly or nested in an 'options' dict
+        options = kwargs.get("options", {})
+        task_id = kwargs.get("task_id") or kwargs.get("task_name")
+        
+        if not task_id and isinstance(options, dict):
+            task_id = options.get("task_id") or options.get("task_name")
+            
+        if task_id:
+            self.task_name = task_id
+            
         self._init_task()
         return self._get_obs(feedback="Ticket opened. Please route this ticket correctly.", reward=0.0, done=False)
 
