@@ -6,7 +6,7 @@ from env import Environment, TicketTriageAction
 
 API_BASE_URL = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
 MODEL_NAME = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-72B-Instruct")
-HF_TOKEN = os.getenv("HF_TOKEN")
+API_KEY = os.getenv("API_KEY", os.getenv("HF_TOKEN", "dummy"))
 
 # Optional - if you use from_docker_image():
 LOCAL_IMAGE_NAME = os.getenv("LOCAL_IMAGE_NAME")
@@ -141,7 +141,7 @@ def run_task(client: OpenAI, task_name: str) -> None:
         log_end(success=success, steps=steps_taken, score=final_score, rewards=rewards)
 
 def main():
-    client = OpenAI(base_url=API_BASE_URL, api_key=HF_TOKEN or "dummy")
+    client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
     
     tasks = ["easy", "medium", "hard"]
     for task in tasks:
