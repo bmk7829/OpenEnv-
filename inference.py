@@ -109,10 +109,10 @@ def run_task(client: OpenAI, task_name: str) -> None:
     
     try:
         for step in range(1, MAX_STEPS + 1):
-            if env.state().done:
+            if env.state.done:
                 break
                 
-            action_obj = get_model_action(client, step, env.state(), last_feedback)
+            action_obj = get_model_action(client, step, env.state, last_feedback)
             action_str = action_obj.model_dump_json(exclude_none=True).replace(" ", "")
             
             new_obs = env.step(action_obj)
@@ -132,7 +132,7 @@ def run_task(client: OpenAI, task_name: str) -> None:
                 break
                 
         from env import grader
-        final_score = grader(env.state())
+        final_score = grader(env.state)
         success = final_score >= 1.0
         
     except Exception as e:
