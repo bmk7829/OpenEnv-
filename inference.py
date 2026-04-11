@@ -141,7 +141,12 @@ def run_task(client: OpenAI, task_name: str) -> None:
         log_end(success=success, steps=steps_taken, score=final_score, rewards=rewards)
 
 def main():
-    client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
+    # Graders often inject environment variables *after* importing the file.
+    # Fetching at runtime ensures we don't accidentally cache local credentials.
+    runtime_base_url = os.environ.get("API_BASE_URL") or os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
+    runtime_api_key = os.environ.get("API_KEY") or os.getenv("API_KEY", os.getenv("HF_TOKEN", "dummy"))
+    
+    client = OpenAI(base_url=runtime_base_url, api_key=runtime_api_key)
     
     tasks = ["easy", "medium", "hard"]
     for task in tasks:
