@@ -4,8 +4,9 @@ from typing import List, Optional, Any
 from openai import OpenAI
 from env import Environment, TicketTriageAction
 
-# Environment variables must be fetched at runtime to support proxy injection.
-# We will read them directly when needed.
+API_BASE_URL = os.environ.get("API_BASE_URL")
+API_KEY = os.environ.get("API_KEY")
+MODEL_NAME = os.environ.get("MODEL_NAME", "Qwen/Qwen2.5-72B-Instruct")
 # Optional - if you use from_docker_image():
 LOCAL_IMAGE_NAME = os.getenv("LOCAL_IMAGE_NAME")
 BENCHMARK = "ticket_triage"
@@ -59,9 +60,7 @@ Provide your next JSON action.
 
 def get_model_action(client: OpenAI, step: int, state: Any, feedback: str) -> TicketTriageAction:
     user_prompt = build_user_prompt(step, state, feedback)
-    # Fetch MODEL_NAME at runtime to support dynamic injections from the grader
-    model_name_runtime = os.environ.get("MODEL_NAME", "Qwen/Qwen2.5-72B-Instruct")
-    
+    model_name_runtime = os.environ.get("MODEL_NAME", MODEL_NAME)
     try:
         completion = client.chat.completions.create(
             model=model_name_runtime,
@@ -69,8 +68,8 @@ def get_model_action(client: OpenAI, step: int, state: Any, feedback: str) -> Ti
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": user_prompt},
             ],
-            temperature=0.7,
-            max_tokens=500,
+            temperature=TEMPERATURE,
+            max_tokens=MAX_TOKENS,
             stream=False,
         )
         text = (completion.choices[0].message.content or "").strip()
@@ -103,8 +102,7 @@ def run_task(client: OpenAI, task_name: str) -> None:
     final_score = 0.0
     success = False
     
-    model_name_runtime = os.environ.get("MODEL_NAME", "Qwen/Qwen2.5-72B-Instruct")
-    log_start(task=task_name, env_name="ticket_triage", model=model_name_runtime)
+    log_start(task=task_name, env_name=BENCHMARK, model=MODEL_NAME)
     
     obs = env.reset()
     last_feedback = obs.feedback
@@ -143,7 +141,6 @@ def run_task(client: OpenAI, task_name: str) -> None:
         log_end(success=success, steps=steps_taken, score=final_score, rewards=rewards)
 
 def main():
-    # Strict single-line initialization as requested by platform
     client = OpenAI(base_url=os.environ["API_BASE_URL"], api_key=os.environ["API_KEY"])
     
     tasks = ["easy", "medium", "hard"]
