@@ -5,14 +5,9 @@ from typing import List, Optional, Any
 from openai import OpenAI
 from env import Environment, TicketTriageAction
 
-# We construct the client globally so that any simplistic AST scanner finds it exactly
-# as instructed without needing to traverse function definitions. No local fallbacks
-# are provided to explicitly comply with Rule 3 (no other providers).
-client = OpenAI(base_url=os.environ["API_BASE_URL"], api_key=os.environ["API_KEY"])
-
-# Use dynamic model fetching, but default to standard LiteLLM fallback
-# instead of a Hugging Face model to avoid any AST flags.
-MODEL_NAME = os.environ.get("MODEL_NAME", "gpt-3.5-turbo")
+# Environment variables will be fetched dynamically inside the action generator
+# to prevent import-time environment variable freezing and ensure late-injected
+# Phase 2 proxy credentials are unequivocally captured.
 
 MAX_STEPS = 5
 TEMPERATURE = 0.7
@@ -65,12 +60,17 @@ Provide your next JSON action.
 def get_model_action(step: int, state: Any, feedback: str) -> TicketTriageAction:
     user_prompt = build_user_prompt(step, state, feedback)
     
+    # Dynamically initialize client exactly as instructed to guarantee 
+    # capturing the late-injected platform proxy variables.
+    client = OpenAI(base_url=os.environ["API_BASE_URL"], api_key=os.environ["API_KEY"])
+    model_name_runtime = os.environ.get("MODEL_NAME", "gpt-3.5-turbo")
+    
     # Intentionally removing the broad try/except around this network call.
     # If the LLM proxy rejects the request, we want the script to hard-crash 
     # so we can see the exact proxy error in the validator logs instead of 
     # silently exiting and getting a vague "no API calls observed" result.
     completion = client.chat.completions.create(
-        model=MODEL_NAME,
+        model=model_name_runtime,
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": user_prompt},
@@ -111,7 +111,8 @@ def run_task(task_name: str) -> None:
     final_score = 0.0
     success = False
     
-    log_start(task=task_name, env_name="ticket_triage", model=MODEL_NAME)
+    # log model correctly with fallback evaluation for stdout parsing
+    log_start(task=task_name, env_name="ticket_triage", model=os.environ.get("MODEL_NAME", "gpt-3.5-turbo"))
     
     obs = env.reset()
     last_feedback = obs.feedback
